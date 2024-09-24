@@ -1,14 +1,14 @@
-//Build a music playlist manager using linked lists to manage song order, insertions, deletions, and shuffle functionalities.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
 struct Song {
     char title[50];
     char artist[50];
     struct Song* next;
 };
+
 struct Song* createSong(char* title, char* artist) {
     struct Song* newSong = (struct Song*)malloc(sizeof(struct Song));
     strcpy(newSong->title, title);
@@ -16,6 +16,7 @@ struct Song* createSong(char* title, char* artist) {
     newSong->next = NULL;
     return newSong;
 }
+
 void addSong(struct Song** head, char* title, char* artist) {
     struct Song* newSong = createSong(title, artist);
     if (*head == NULL) {
@@ -29,6 +30,7 @@ void addSong(struct Song** head, char* title, char* artist) {
     }
     printf("Song \"%s\" by %s added to the playlist.\n", title, artist);
 }
+
 void deleteSong(struct Song** head, char* title) {
     struct Song* temp = *head;
     struct Song* prev = NULL;
@@ -50,6 +52,7 @@ void deleteSong(struct Song** head, char* title) {
     free(temp);
     printf("Song \"%s\" deleted from the playlist.\n", title);
 }
+
 void displayPlaylist(struct Song* head) {
     if (head == NULL) {
         printf("The playlist is empty.\n");
@@ -62,6 +65,7 @@ void displayPlaylist(struct Song* head) {
         temp = temp->next;
     }
 }
+
 int countSongs(struct Song* head) {
     int count = 0;
     struct Song* temp = head;
@@ -71,7 +75,25 @@ int countSongs(struct Song* head) {
     }
     return count;
 }
-void shufflePlaylist(struct Song** head) {
+
+void displayShuffledPlaylist(struct Song* head, struct Song* currentSong) {
+    if (head == NULL) {
+        printf("The playlist is empty.\n");
+        return;
+    }
+    struct Song* temp = head;
+    printf("\nShuffled Playlist:\n");
+    while (temp != NULL) {
+        if (temp == currentSong) {
+            printf("-> Now Playing: \"%s\" by %s\n", temp->title, temp->artist); // Highlight current song
+        } else {
+            printf("   Title: %s, Artist: %s\n", temp->title, temp->artist);
+        }
+        temp = temp->next;
+    }
+}
+
+void shufflePlaylist(struct Song** head, struct Song** currentSong) {
     int count = countSongs(*head);
     if (count < 2) {
         printf("Not enough songs to shuffle.\n");
@@ -95,8 +117,21 @@ void shufflePlaylist(struct Song** head) {
             *head = temp;
         }
     }
+    *currentSong = *head;  // Update current playing song after shuffle
     printf("Playlist shuffled.\n");
+
+    // Display shuffled playlist with current song highlighted
+    displayShuffledPlaylist(*head, *currentSong);
 }
+
+void playCurrentSong(struct Song* currentSong) {
+    if (currentSong == NULL) {
+        printf("No song is currently playing.\n");
+    } else {
+        printf("\nNow Playing: \"%s\" by %s\n", currentSong->title, currentSong->artist);
+    }
+}
+
 void freePlaylist(struct Song* head) {
     struct Song* temp;
     while (head != NULL) {
@@ -105,8 +140,10 @@ void freePlaylist(struct Song* head) {
         free(temp);
     }
 }
+
 int main() {
     struct Song* playlist = NULL;
+    struct Song* currentSong = NULL;
     int choice;
     char title[50];
     char artist[50];
@@ -117,7 +154,8 @@ int main() {
         printf("2. Delete Song\n");
         printf("3. Display Playlist\n");
         printf("4. Shuffle Playlist\n");
-        printf("5. Exit\n");
+        printf("5. Play Current Song\n");
+        printf("6. Exit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
@@ -133,14 +171,20 @@ int main() {
                 printf("Enter song title to delete: ");
                 scanf(" %[^\n]s", title);
                 deleteSong(&playlist, title);
+                if (currentSong != NULL && strcmp(currentSong->title, title) == 0) {
+                    currentSong = playlist;  // Reset current song if deleted
+                }
                 break;
             case 3:
                 displayPlaylist(playlist);
                 break;
             case 4:
-                shufflePlaylist(&playlist);
+                shufflePlaylist(&playlist, &currentSong);
                 break;
             case 5:
+                playCurrentSong(currentSong);
+                break;
+            case 6:
                 freePlaylist(playlist);
                 printf("Exiting Playlist Manager.\n");
                 return 0;
